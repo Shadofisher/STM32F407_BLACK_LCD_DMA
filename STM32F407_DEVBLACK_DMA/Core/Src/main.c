@@ -27,6 +27,7 @@
 #include "lvgl.h"
 #include "touch.h"
 #include "gui_guider.h"
+#define RESCALE_FACTOR 1000000
 
 
 /* USER CODE END Includes */
@@ -123,6 +124,186 @@ void TP_Init( )
     lv_indev_drv_register(&indev_drv);
 }
 
+int32_t A2 = 834850;
+int32_t B2 = -9625;
+int32_t C2 = 23783610;
+int32_t D2 = -10244;
+int32_t E2 = 888915;
+int32_t F2 = 26261272;
+uint32_t TSC_Value_X;
+uint32_t TSC_Value_Y;
+uint16_t LCD_Width  = 240;
+uint16_t LCD_Height = 320;
+
+void TP_Calibrate(void)
+{
+	  uint32_t coordinate_X1a = 0, coordinate_X2a = 0, coordinate_X3a = 0, coordinate_X4a = 0, coordinate_X5a = 0;
+	  uint32_t coordinate_Y1a = 0, coordinate_Y2a = 0, coordinate_Y3a = 0, coordinate_Y4a = 0, coordinate_Y5a = 0;
+	  uint32_t coordinate_X1b = 0, coordinate_X2b = 0, coordinate_X3b = 0, coordinate_X4b = 0, coordinate_X5b = 0;
+	  uint32_t coordinate_Y1b = 0, coordinate_Y2b = 0, coordinate_Y3b = 0, coordinate_Y4b = 0, coordinate_Y5b = 0;
+	  uint32_t coordinate_X1 = 0, coordinate_X2 = 0, coordinate_X3 = 0, coordinate_X4 = 0, coordinate_X5 = 0;
+	  uint32_t coordinate_Y1 = 0, coordinate_Y2 = 0, coordinate_Y3 = 0, coordinate_Y4 = 0, coordinate_Y5 = 0;
+	  uint16_t Xd1 = (LCD_Width / 2), Xd2 = 1 * (LCD_Width / 5), Xd3 = 4 * (LCD_Width / 5), Xd4 = 4 * (LCD_Width / 5), Xd5 = 1 * (LCD_Width / 5);
+	  uint16_t Yd1 = (LCD_Height / 2), Yd2 = 1 * (LCD_Height / 5), Yd3 = 1 * (LCD_Height / 5), Yd4 = 4 * (LCD_Height / 5), Yd5 = 4 * (LCD_Height / 5);
+	  double A = 0.0, B = 0.0, C = 0.0, D = 0.0, E = 0.0, F = 0.0;
+	  double d = 0.0, dx1 = 0.0, dx2 = 0.0, dx3 = 0.0, dy1 = 0.0, dy2 = 0.0, dy3 = 0.0;
+	  uint32_t X2_1 = 0, X2_2 = 0, X2_3 = 0, X2_4 = 0, X2_5 = 0;
+	  uint32_t Y2_1 = 0, Y2_2 = 0, Y2_3 = 0, Y2_4 = 0, Y2_5 = 0;
+	  uint32_t XxY_1 = 0, XxY_2 = 0, XxY_3 = 0, XxY_4 = 0, XxY_5 = 0;
+	  uint32_t XxXd_1 = 0, XxXd_2 = 0, XxXd_3 = 0, XxXd_4 = 0, XxXd_5 = 0;
+	  uint32_t YxXd_1 = 0, YxXd_2 = 0, YxXd_3 = 0, YxXd_4 = 0, YxXd_5 = 0;
+	  uint32_t XxYd_1 = 0, XxYd_2 = 0, XxYd_3 = 0, XxYd_4 = 0, XxYd_5 = 0;
+	  uint32_t YxYd_1 = 0, YxYd_2 = 0, YxYd_3 = 0, YxYd_4 = 0, YxYd_5 = 0;
+	  uint32_t alfa = 0, beta = 0, chi = 0, Kx = 0, Ky = 0, Lx = 0, Ly = 0;
+	  uint16_t epsilon = 0, fi = 0, Mx = 0, My = 0;
+
+	  LCD_Clear(BLUE);
+	  LCD_Fill((Xd1 - 5),(Yd1 - 5),(Xd1 + 5),(Yd1 + 5),WHITE);
+	  while((XPT2046_CAL_TouchGetCoordinates(&TSC_Value_X, &TSC_Value_Y)) == false);
+	  coordinate_X1a = TSC_Value_X;
+	  coordinate_Y1a = TSC_Value_Y;
+	  coordinate_X1b = TSC_Value_X;
+	  coordinate_Y1b = TSC_Value_Y;
+	  LCD_Fill(((TSC_Value_X) - 2),((TSC_Value_Y) - 2),((TSC_Value_X) + 2),((TSC_Value_Y) + 2),BLACK);
+	  while((XPT2046_CAL_TouchGetCoordinates(&TSC_Value_X, &TSC_Value_Y)) != false);
+	  HAL_Delay(1000);
+
+	  LCD_Clear(BLUE);
+	  LCD_Fill((Xd2 - 5),(Yd2 - 5),(Xd2 + 5),(Yd2 + 5),WHITE);
+	  while((XPT2046_CAL_TouchGetCoordinates(&TSC_Value_X, &TSC_Value_Y)) == false);
+	  coordinate_X2a = TSC_Value_X;
+	  coordinate_Y2a = TSC_Value_Y;
+	  coordinate_X2b = TSC_Value_X;
+	  coordinate_Y2b = TSC_Value_Y;
+	  LCD_Fill(((TSC_Value_X) - 2),((TSC_Value_Y) - 2),((TSC_Value_X) + 2),((TSC_Value_Y) + 2),BLACK);
+	  while((XPT2046_CAL_TouchGetCoordinates(&TSC_Value_X, &TSC_Value_Y)) != false);
+	  HAL_Delay(1000);
+
+	  LCD_Clear(BLUE);
+	  LCD_Fill((Xd3 - 5),(Yd3 - 5),(Xd3 + 5),(Yd3 + 5),WHITE);
+	  while((XPT2046_CAL_TouchGetCoordinates(&TSC_Value_X, &TSC_Value_Y)) == false);
+	  coordinate_X3a = TSC_Value_X;
+	  coordinate_Y3a = TSC_Value_Y;
+	  coordinate_X3b = TSC_Value_X;
+	  coordinate_Y3b = TSC_Value_Y;
+	  LCD_Fill(((TSC_Value_X) - 2),((TSC_Value_Y) - 2),((TSC_Value_X) + 2),((TSC_Value_Y) + 2),BLACK);
+	  while((XPT2046_CAL_TouchGetCoordinates(&TSC_Value_X, &TSC_Value_Y)) != false);
+	  HAL_Delay(1000);
+
+	  LCD_Clear(BLUE);
+	  LCD_Fill((Xd4 - 5),(Yd4 - 5),(Xd4 + 5),(Yd4 + 5),WHITE);
+	  while((XPT2046_CAL_TouchGetCoordinates(&TSC_Value_X, &TSC_Value_Y)) == false);
+	  coordinate_X4a = TSC_Value_X;
+	  coordinate_Y4a = TSC_Value_Y;
+	  coordinate_X4b = TSC_Value_X;
+	  coordinate_Y4b = TSC_Value_Y;
+	  LCD_Fill(((TSC_Value_X) - 2),((TSC_Value_Y) - 2),((TSC_Value_X) + 2),((TSC_Value_Y) + 2),BLACK);
+	  while((XPT2046_CAL_TouchGetCoordinates(&TSC_Value_X, &TSC_Value_Y)) != false);
+	  HAL_Delay(1000);
+
+	  LCD_Clear(BLUE);
+	  LCD_Fill((Xd5 - 5),(Yd5 - 5),(Xd5 + 5),(Yd5 + 5),WHITE);
+	  while((XPT2046_CAL_TouchGetCoordinates(&TSC_Value_X, &TSC_Value_Y)) == false);
+	  coordinate_X5a = TSC_Value_X;
+	  coordinate_Y5a = TSC_Value_Y;
+	  coordinate_X5b = TSC_Value_X;
+	  coordinate_Y5b = TSC_Value_Y;
+	  LCD_Fill(((TSC_Value_X) - 2),((TSC_Value_Y) - 2),((TSC_Value_X) + 2),((TSC_Value_Y) + 2),BLACK);
+	  while((XPT2046_CAL_TouchGetCoordinates(&TSC_Value_X, &TSC_Value_Y)) != false);
+	  HAL_Delay(5000);
+
+	  /* Average between X and Y coupled Touchscreen values */
+	  coordinate_X1 = (coordinate_X1a + coordinate_X1b) / 2;
+	  coordinate_X2 = (coordinate_X2a + coordinate_X2b) / 2;
+	  coordinate_X3 = (coordinate_X3a + coordinate_X3b) / 2;
+	  coordinate_X4 = (coordinate_X4a + coordinate_X4b) / 2;
+	  coordinate_X5 = (coordinate_X5a + coordinate_X5b) / 2;
+
+	  coordinate_Y1 = (coordinate_Y1a + coordinate_Y1b) / 2;
+	  coordinate_Y2 = (coordinate_Y2a + coordinate_Y2b) / 2;
+	  coordinate_Y3 = (coordinate_Y3a + coordinate_Y3b) / 2;
+	  coordinate_Y4 = (coordinate_Y4a + coordinate_Y4b) / 2;
+	  coordinate_Y5 = (coordinate_Y5a + coordinate_Y5b) / 2;
+
+	  X2_1 = (coordinate_X1 * coordinate_X1);
+	  X2_2 = (coordinate_X2 * coordinate_X2);
+	  X2_3 = (coordinate_X3 * coordinate_X3);
+	  X2_4 = (coordinate_X4 * coordinate_X4);
+	  X2_5 = (coordinate_X5 * coordinate_X5);
+
+	  Y2_1 = (coordinate_Y1 * coordinate_Y1);
+	  Y2_2 = (coordinate_Y2 * coordinate_Y2);
+	  Y2_3 = (coordinate_Y3 * coordinate_Y3);
+	  Y2_4 = (coordinate_Y4 * coordinate_Y4);
+	  Y2_5 = (coordinate_Y5 * coordinate_Y5);
+
+	  XxY_1 = (coordinate_X1 * coordinate_Y1);
+	  XxY_2 = (coordinate_X2 * coordinate_Y2);
+	  XxY_3 = (coordinate_X3 * coordinate_Y3);
+	  XxY_4 = (coordinate_X4 * coordinate_Y4);
+	  XxY_5 = (coordinate_X5 * coordinate_Y5);
+
+	  XxXd_1 = ( coordinate_X1 * Xd1 );
+	  XxXd_2 = ( coordinate_X2 * Xd2 );
+	  XxXd_3 = ( coordinate_X3 * Xd3 );
+	  XxXd_4 = ( coordinate_X4 * Xd4 );
+	  XxXd_5 = ( coordinate_X5 * Xd5 );
+
+	  YxXd_1 = ( coordinate_Y1 * Xd1 );
+	  YxXd_2 = ( coordinate_Y2 * Xd2 );
+	  YxXd_3 = ( coordinate_Y3 * Xd3 );
+	  YxXd_4 = ( coordinate_Y4 * Xd4 );
+	  YxXd_5 = ( coordinate_Y5 * Xd5 );
+
+	  XxYd_1 = ( coordinate_X1 * Yd1 );
+	  XxYd_2 = ( coordinate_X2 * Yd2 );
+	  XxYd_3 = ( coordinate_X3 * Yd3 );
+	  XxYd_4 = ( coordinate_X4 * Yd4 );
+	  XxYd_5 = ( coordinate_X5 * Yd5 );
+
+	  YxYd_1 = ( coordinate_Y1 * Yd1 );
+	  YxYd_2 = ( coordinate_Y2 * Yd2 );
+	  YxYd_3 = ( coordinate_Y3 * Yd3 );
+	  YxYd_4 = ( coordinate_Y4 * Yd4 );
+	  YxYd_5 = ( coordinate_Y5 * Yd5 );
+
+	  alfa = X2_1 + X2_2 + X2_3 + X2_4 + X2_5;
+	  beta = Y2_1 + Y2_2 + Y2_3 + Y2_4 + Y2_5;
+	  chi = XxY_1 + XxY_2 + XxY_3 + XxY_4 + XxY_5;
+	  epsilon = coordinate_X1 + coordinate_X2 + coordinate_X3 + coordinate_X4 + coordinate_X5;
+	  fi = coordinate_Y1 + coordinate_Y2 + coordinate_Y3 + coordinate_Y4 + coordinate_Y5;
+	  Kx = XxXd_1 + XxXd_2 + XxXd_3 + XxXd_4 + XxXd_5;
+	  Ky = XxYd_1 + XxYd_2 + XxYd_3 + XxYd_4 + XxYd_5;
+	  Lx = YxXd_1 + YxXd_2 + YxXd_3 + YxXd_4 + YxXd_5;
+	  Ly = YxYd_1 + YxYd_2 + YxYd_3 + YxYd_4 + YxYd_5;
+	  Mx = Xd1 + Xd2 + Xd3 + Xd4 + Xd5;
+	  My = Yd1 + Yd2 + Yd3 + Yd4 + Yd5;
+
+	  d = 5 * ( ((double)alfa * beta) - ((double)chi * chi) ) + 2 * ((double)chi * epsilon * fi) - ((double)alfa * fi * fi ) - ( (double)beta * epsilon * epsilon );
+	  dx1 = 5 * ( ((double)Kx * beta) - ((double)Lx * chi) ) + ((double)fi * ( ((double)Lx * epsilon) - ((double)Kx * fi) )) + ((double)Mx * ( ((double)chi * fi) - ((double)beta * epsilon) ));
+	  dx2 = 5 * ( ((double)Lx * alfa) - ((double)Kx * chi) ) + ((double)epsilon * ( ((double)Kx * fi) - ((double)Lx * epsilon) )) + ((double)Mx * ( ((double)chi * epsilon) - ((double)alfa * fi) ));
+	  dx3 = ((double)Kx * ( ((double)chi * fi) - ((double)beta * epsilon) )) + ((double)Lx * ( ((double)chi * epsilon) - ((double)alfa * fi) )) + ((double)Mx * ( ((double)alfa * beta) - ((double)chi * chi) ));
+	  dy1 = 5 * ( ((double)Ky * beta) - ((double)Ly * chi) ) + ((double)fi * ( ((double)Ly * epsilon) - ((double)Ky * fi) )) + ((double)My * ( ((double)chi * fi) - ((double)beta * epsilon) ));
+	  dy2 = 5 * ( ((double)Ly * alfa) - ((double)Ky * chi) ) + ((double)epsilon * ( ((double)Ky * fi) - ((double)Ly * epsilon) )) + ((double)My * ( ((double)chi * epsilon) - ((double)alfa * fi) ));
+	  dy3 = ((double)Ky * ( ((double)chi * fi) - ((double)beta * epsilon) )) + ((double)Ly * ( ((double)chi * epsilon) - ((double)alfa * fi) )) + ((double)My * ( ((double)alfa * beta) - ((double)chi * chi) ));
+
+	  A = dx1 / d;
+	  B = dx2 / d;
+	  C = dx3 / d;
+	  D = dy1 / d;
+	  E = dy2 / d;
+	  F = dy3 / d;
+
+	  /* To avoid computation with "double" variables A, B, C, D, E, F, we use the s32 variables
+	     A2, B2, C2, D2, E2, F2, multiplied for a Scale Factor equal to 100000 to retain the precision*/
+	  A2 = (int32_t)(A * RESCALE_FACTOR);
+	  B2 = (int32_t)(B * RESCALE_FACTOR);
+	  C2 = (int32_t)(C * RESCALE_FACTOR);
+	  D2 = (int32_t)(D * RESCALE_FACTOR);
+	  E2 = (int32_t)(E * RESCALE_FACTOR);
+	  F2 = (int32_t)(F * RESCALE_FACTOR);
+
+}
 
 /* USER CODE END 0 */
 
@@ -165,6 +346,10 @@ int main(void)
 
 
   LCD_Init();
+ TP_Calibrate();
+
+  //LCD_Clear(White);
+  //LCD_Fill(10,10,20,20,BLUE);
 
 
   TP_Init();
@@ -334,7 +519,16 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(LCD_BL_GPIO_Port, LCD_BL_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
+
   HAL_GPIO_WritePin(XPT2046_CS_GPIO_Port, XPT2046_CS_Pin, GPIO_PIN_RESET);
+
+  GPIO_InitStruct.Pin = GPIO_PIN_2;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
+  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_2, GPIO_PIN_SET);
 
   /*Configure GPIO pin : XPT2046_IRQ_Pin */
   GPIO_InitStruct.Pin = XPT2046_IRQ_Pin;
