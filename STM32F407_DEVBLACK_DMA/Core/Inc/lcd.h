@@ -190,5 +190,5 @@ typedef struct
 #define R193           0xC1
 #define R229           0xE5
 
-
+void LCD_Fill(uint16_t sx,uint16_t sy,uint16_t ex,uint16_t ey,uint16_t color);
 #endif /* INC_LCD_H_ */

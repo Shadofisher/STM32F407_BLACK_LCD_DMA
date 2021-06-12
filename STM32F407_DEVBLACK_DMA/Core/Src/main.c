@@ -26,7 +26,7 @@
 #include "lcd.h"
 #include "lvgl.h"
 #include "touch.h"
-#include "gui_guider.h"
+#include "generated/gui_guider.h"
 #define RESCALE_FACTOR 1000000
 
 
@@ -66,6 +66,9 @@ void TransferError(DMA_HandleTypeDef *_hdma)
 }
 
 lv_ui lvui;
+lv_ui lvui2;
+lv_ui guider_ui;
+
 
 
 
@@ -130,8 +133,8 @@ int32_t C2 = 23783610;
 int32_t D2 = -10244;
 int32_t E2 = 888915;
 int32_t F2 = 26261272;
-uint32_t TSC_Value_X;
-uint32_t TSC_Value_Y;
+uint16_t TSC_Value_X;
+uint16_t TSC_Value_Y;
 uint16_t LCD_Width  = 240;
 uint16_t LCD_Height = 320;
 
@@ -314,7 +317,6 @@ void TP_Calibrate(void)
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	uint16_t x,y;
 
   /* USER CODE END 1 */
 
@@ -346,7 +348,7 @@ int main(void)
 
 
   LCD_Init();
- TP_Calibrate();
+ //TP_Calibrate();
 
   //LCD_Clear(White);
   //LCD_Fill(10,10,20,20,BLUE);

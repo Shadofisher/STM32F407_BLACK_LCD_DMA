@@ -35,5 +35,6 @@ extern SPI_HandleTypeDef XPT2046_SPI_PORT;
 // call before initializing any SPI devices
 bool XPT2046_TouchPressed();
 bool XPT2046_TouchGetCoordinates(lv_indev_drv_t * drv, lv_indev_data_t *data);
+bool XPT2046_CAL_TouchGetCoordinates(uint16_t *x, uint16_t *y);
 
 #endif /* INC_TOUCH_H_ */

@@ -8,7 +8,7 @@
 #include "lcd.h"
 #include "main.h"
 #include "lv_conf.h"
-#include "lvgl/lvgl.h"
+#include "generated/lvgl/lvgl.h"
 
 #include "font.h"
 
@@ -353,45 +353,9 @@ void __LCD_Fill(uint16_t sx,uint16_t sy,uint16_t ex,uint16_t ey,uint16_t color)
 }
 
 /*For LittlevGL*/
-static void old_tft_flush_cb(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * color_p)
-{
-	uint16_t i,j;
-	uint16_t xlen=0;
-	uint32_t size;
-	uint32_t offset = 0;
-	//LCD_SetWindow(area->x1, area->y1, area->x2+1, area->y2+1);
-
-	//size = (area->x2-area->x1) * (area->y2-area->y1);
-	size = (lv_area_get_width(area)) * (lv_area_get_height(area));
-
-	xlen=area->x2-area->x1+1;
-	for(i=area->y1;i<=area->y2;i++)
-	{
-	 	LCD_SetCursor(area->x1,i);      				//ÉèÖÃ¹â±êÎ»ÖÃ
-		LCD_WriteRAM_Prepare();     			//¿ªÊŒÐŽÈëGRAM
-		//for(j=0;j<xlen;j++)
-		//	LCD->LCD_RAM=*(uint16_t*)color_p++;	//ÏÔÊŸÑÕÉ«
-		if(HAL_DMA_Start_IT(&hdma_memtomem_dma2_stream0, (uint32_t)color_p+offset, (uint32_t)0x60080000, xlen) != HAL_OK)
-		{
-		    /* Transfer Error */
-		    Error_Handler();
-		}
-		notcomplete = 1;
-		while(notcomplete);
-		offset += 480;
-	}
-
-	lv_disp_flush_ready(drv);
-
-
-}
-/*For LittlevGL*/
 static void tft_flush_cb(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * color_p)
 {
-	uint16_t i,j;
 	uint16_t xlen=0;
-	uint32_t size;
-	uint32_t offset = 0;
 	uint16_t col_start = 0;
 	uint16_t col_end   = 0;
 	col_start = area->x1;
@@ -404,7 +368,6 @@ static void tft_flush_cb(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t
 	LCD_WR_DATA((uint8_t)((col_end) >> 0));
 
 
-	size = (lv_area_get_width(area)) * (lv_area_get_height(area));
  	LCD_SetCursor(area->x1,area->y1);
 
 	xlen=(area->x2-area->x1+1) * ((area->y2 - area->y1)+1);
@@ -543,22 +506,10 @@ void LCD_Init(void)
 		LCD_WR_DATA(0x00);
 		LCD_WR_DATA(0xef);
 		LCD_WR_REG(0x11); //Exit Sleep
-		delay_us(120);
+		//delay_us(120);
 //		LCD_WR_REG(0x29); //display on
 		LCD_Display_Dir(0);		 	//Ä¬ÈÏÎªÊúÆÁ
-		//LCD_LED=1;					//µãÁÁ±³¹â
-		LCD_Clear(WHITE);
-		delay_us(120);
 
-		//LCD_Fill(1,1,230,310,BLUE);
-		//LCD_Fill(50,50,130,110,GREEN);
-		LCD_ShowString(30,40,210,24,24,"Stm32F4");
-		LCD_ShowString(30,40,210,24,24,"STM32F4");
-		LCD_ShowString(30,70,200,16,16,"TFTLCD TEST");
-		LCD_ShowString(30,90,200,16,16,"www.csun.co.jp");
- 		LCD_ShowString(30,110,200,16,16,"LCD: ILI9431");
-		LCD_ShowString(30,130,200,12,12,"2021/05/28");
-		LCD_ShowString(30,130,200,12,12,"Bug Fix: Graeme");
 		LCD_WR_REG(0x29); //display on
 
 }

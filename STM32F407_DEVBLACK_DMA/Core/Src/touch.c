@@ -112,14 +112,11 @@ bool XPT2046_TouchGetCoordinates(lv_indev_drv_t * drv, lv_indev_data_t *data)
 }
 
 
-bool XPT2046_CAL_TouchGetCoordinates(uint *x, uint*y)
+bool XPT2046_CAL_TouchGetCoordinates(uint16_t *x, uint16_t *y)
 {
     static const uint8_t cmd_read_x[] = { READ_X };
     static const uint8_t cmd_read_y[] = { READ_Y };
     static const uint8_t zeroes_tx[] = { 0x00, 0x00 };
-	static int16_t last_x = 0;
-	static int16_t last_y = 0;
-	//static int16_t x,y;
 
     XPT2046_TouchSelect();
 
