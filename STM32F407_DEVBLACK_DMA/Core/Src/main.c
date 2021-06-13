@@ -70,11 +70,7 @@ void TransferError(DMA_HandleTypeDef *_hdma)
 
 }
 
-lv_ui lvui;
-lv_ui lvui2;
 lv_ui guider_ui;
-
-
 
 
 /* USER CODE END PV */
