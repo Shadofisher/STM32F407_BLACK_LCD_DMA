@@ -19,6 +19,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -52,6 +53,9 @@ SPI_HandleTypeDef hspi2;
 DMA_HandleTypeDef hdma_memtomem_dma2_stream0;
 SRAM_HandleTypeDef hsram1;
 
+osThreadId defaultTaskHandle;
+uint32_t defaultTaskBuffer[ 512 ];
+osStaticThreadDef_t defaultTaskControlBlock;
 /* USER CODE BEGIN PV */
 
 extern uint8_t notcomplete;
@@ -59,6 +63,7 @@ extern uint8_t notcomplete;
 void TransferComplete(DMA_HandleTypeDef *_hdma)
 {
 	notcomplete = 0;
+
 }
 void TransferError(DMA_HandleTypeDef *_hdma)
 {
@@ -80,6 +85,8 @@ static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_FSMC_Init(void);
 static void MX_SPI2_Init(void);
+void StartDefaultTask(void const * argument);
+
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -169,7 +176,7 @@ void TP_Calibrate(void)
 	  coordinate_Y1b = TSC_Value_Y;
 	  LCD_Fill(((TSC_Value_X) - 2),((TSC_Value_Y) - 2),((TSC_Value_X) + 2),((TSC_Value_Y) + 2),BLACK);
 	  while((XPT2046_CAL_TouchGetCoordinates(&TSC_Value_X, &TSC_Value_Y)) != false);
-	  HAL_Delay(1000);
+	  HAL_Delay(500);
 
 	  LCD_Clear(BLUE);
 	  LCD_Fill((Xd2 - 5),(Yd2 - 5),(Xd2 + 5),(Yd2 + 5),WHITE);
@@ -180,7 +187,7 @@ void TP_Calibrate(void)
 	  coordinate_Y2b = TSC_Value_Y;
 	  LCD_Fill(((TSC_Value_X) - 2),((TSC_Value_Y) - 2),((TSC_Value_X) + 2),((TSC_Value_Y) + 2),BLACK);
 	  while((XPT2046_CAL_TouchGetCoordinates(&TSC_Value_X, &TSC_Value_Y)) != false);
-	  HAL_Delay(1000);
+	  HAL_Delay(500);
 
 	  LCD_Clear(BLUE);
 	  LCD_Fill((Xd3 - 5),(Yd3 - 5),(Xd3 + 5),(Yd3 + 5),WHITE);
@@ -191,7 +198,7 @@ void TP_Calibrate(void)
 	  coordinate_Y3b = TSC_Value_Y;
 	  LCD_Fill(((TSC_Value_X) - 2),((TSC_Value_Y) - 2),((TSC_Value_X) + 2),((TSC_Value_Y) + 2),BLACK);
 	  while((XPT2046_CAL_TouchGetCoordinates(&TSC_Value_X, &TSC_Value_Y)) != false);
-	  HAL_Delay(1000);
+	  HAL_Delay(500);
 
 	  LCD_Clear(BLUE);
 	  LCD_Fill((Xd4 - 5),(Yd4 - 5),(Xd4 + 5),(Yd4 + 5),WHITE);
@@ -202,7 +209,7 @@ void TP_Calibrate(void)
 	  coordinate_Y4b = TSC_Value_Y;
 	  LCD_Fill(((TSC_Value_X) - 2),((TSC_Value_Y) - 2),((TSC_Value_X) + 2),((TSC_Value_Y) + 2),BLACK);
 	  while((XPT2046_CAL_TouchGetCoordinates(&TSC_Value_X, &TSC_Value_Y)) != false);
-	  HAL_Delay(1000);
+	  HAL_Delay(500);
 
 	  LCD_Clear(BLUE);
 	  LCD_Fill((Xd5 - 5),(Yd5 - 5),(Xd5 + 5),(Yd5 + 5),WHITE);
@@ -213,7 +220,7 @@ void TP_Calibrate(void)
 	  coordinate_Y5b = TSC_Value_Y;
 	  LCD_Fill(((TSC_Value_X) - 2),((TSC_Value_Y) - 2),((TSC_Value_X) + 2),((TSC_Value_Y) + 2),BLACK);
 	  while((XPT2046_CAL_TouchGetCoordinates(&TSC_Value_X, &TSC_Value_Y)) != false);
-	  HAL_Delay(5000);
+	  //HAL_Delay(5000);
 
 	  /* Average between X and Y coupled Touchscreen values */
 	  coordinate_X1 = (coordinate_X1a + coordinate_X1b) / 2;
@@ -342,6 +349,17 @@ int main(void)
   MX_FSMC_Init();
   MX_SPI2_Init();
   /* USER CODE BEGIN 2 */
+  /*##-5- Select Callbacks functions called after Transfer complete and Transfer error */
+  HAL_DMA_RegisterCallback(&hdma_memtomem_dma2_stream0, HAL_DMA_XFER_CPLT_CB_ID, TransferComplete);
+  HAL_DMA_RegisterCallback(&hdma_memtomem_dma2_stream0, HAL_DMA_XFER_ERROR_CB_ID, TransferError);
+
+  /*##-6- Configure NVIC for DMA transfer complete/error interrupts ##########*/
+  /* Set Interrupt Group Priority */
+  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 0, 0);
+
+  /* Enable the DMA STREAM global Interrupt */
+  HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
+
 
 
   lv_init();
@@ -360,6 +378,35 @@ int main(void)
 
   /* USER CODE END 2 */
 
+  /* USER CODE BEGIN RTOS_MUTEX */
+  /* add mutexes, ... */
+  /* USER CODE END RTOS_MUTEX */
+
+  /* USER CODE BEGIN RTOS_SEMAPHORES */
+  /* add semaphores, ... */
+  /* USER CODE END RTOS_SEMAPHORES */
+
+  /* USER CODE BEGIN RTOS_TIMERS */
+  /* start timers, add new ones, ... */
+  /* USER CODE END RTOS_TIMERS */
+
+  /* USER CODE BEGIN RTOS_QUEUES */
+  /* add queues, ... */
+  /* USER CODE END RTOS_QUEUES */
+
+  /* Create the thread(s) */
+  /* definition and creation of defaultTask */
+  osThreadStaticDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 512, defaultTaskBuffer, &defaultTaskControlBlock);
+  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+
+  /* USER CODE BEGIN RTOS_THREADS */
+  /* add threads, ... */
+  /* USER CODE END RTOS_THREADS */
+
+  /* Start scheduler */
+  osKernelStart();
+
+  /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
@@ -489,16 +536,6 @@ static void MX_DMA_Init(void)
   {
     Error_Handler( );
   }
-  /*##-5- Select Callbacks functions called after Transfer complete and Transfer error */
-    HAL_DMA_RegisterCallback(&hdma_memtomem_dma2_stream0, HAL_DMA_XFER_CPLT_CB_ID, TransferComplete);
-    HAL_DMA_RegisterCallback(&hdma_memtomem_dma2_stream0, HAL_DMA_XFER_ERROR_CB_ID, TransferError);
-
-    /*##-6- Configure NVIC for DMA transfer complete/error interrupts ##########*/
-    /* Set Interrupt Group Priority */
-    HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 0, 0);
-
-    /* Enable the DMA STREAM global Interrupt */
-    HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
 
 }
 
@@ -521,16 +558,10 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(LCD_BL_GPIO_Port, LCD_BL_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-
   HAL_GPIO_WritePin(XPT2046_CS_GPIO_Port, XPT2046_CS_Pin, GPIO_PIN_RESET);
 
-  GPIO_InitStruct.Pin = GPIO_PIN_2;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
-
-  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_2, GPIO_PIN_SET);
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(BUZZER_GPIO_Port, BUZZER_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin : XPT2046_IRQ_Pin */
   GPIO_InitStruct.Pin = XPT2046_IRQ_Pin;
@@ -544,6 +575,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : BUZZER_Pin */
+  GPIO_InitStruct.Pin = BUZZER_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(BUZZER_GPIO_Port, &GPIO_InitStruct);
 
 }
 
@@ -611,6 +649,49 @@ static void MX_FSMC_Init(void)
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
+
+/* USER CODE BEGIN Header_StartDefaultTask */
+/**
+  * @brief  Function implementing the defaultTask thread.
+  * @param  argument: Not used
+  * @retval None
+  */
+/* USER CODE END Header_StartDefaultTask */
+void StartDefaultTask(void const * argument)
+{
+  /* USER CODE BEGIN 5 */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+    lv_tick_inc(5);
+    lv_task_handler();
+	//HAL_Delay(5);
+
+  }
+  /* USER CODE END 5 */
+}
+
+ /**
+  * @brief  Period elapsed callback in non blocking mode
+  * @note   This function is called  when TIM1 interrupt took place, inside
+  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+  * a global variable "uwTick" used as application time base.
+  * @param  htim : TIM handle
+  * @retval None
+  */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  /* USER CODE BEGIN Callback 0 */
+
+  /* USER CODE END Callback 0 */
+  if (htim->Instance == TIM1) {
+    HAL_IncTick();
+  }
+  /* USER CODE BEGIN Callback 1 */
+
+  /* USER CODE END Callback 1 */
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.

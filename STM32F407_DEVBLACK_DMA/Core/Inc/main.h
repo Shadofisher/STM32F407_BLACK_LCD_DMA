@@ -64,6 +64,8 @@ void Error_Handler(void);
 #define LCD_BL_GPIO_Port GPIOB
 #define XPT2046_CS_Pin GPIO_PIN_12
 #define XPT2046_CS_GPIO_Port GPIOB
+#define BUZZER_Pin GPIO_PIN_2
+#define BUZZER_GPIO_Port GPIOD
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
