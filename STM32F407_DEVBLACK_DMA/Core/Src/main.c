@@ -370,7 +370,7 @@ int main(void)
 
   TP_Init();
 
-  setup_ui(&lvui);
+  setup_ui(&guider_ui);
 
   /* USER CODE END 2 */
 
